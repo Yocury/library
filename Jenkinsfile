@@ -5,7 +5,8 @@ pipeline {
         SECRET_KEY = 'ci-secret'
         DATABASE   = "${WORKSPACE}/ci_library.db"
         IMAGE_TAG  = "library-app:${BUILD_NUMBER}"
-        PATH = "C:\\Windows\\System32;C:\\Users\\Vladimir\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\Vladimir\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${env.PATH}"
+        // Добавили путь к Docker в PATH
+        PATH = "C:\\Windows\\System32;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\Users\\Vladimir\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\Vladimir\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${env.PATH}"
     }
 
     options {
@@ -47,7 +48,6 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Собираем образ. Если Docker не видит команду, укажи полный путь, например: "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe"
                 bat "docker build -t %IMAGE_TAG% -t library-app:latest ."
             }
         }
