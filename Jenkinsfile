@@ -34,8 +34,8 @@ pipeline {
 
         stage('Test') {
             steps {
-                bat '''
-                    if not exist reports mkdir reports
+                sh '''
+                    mkdir -p reports
                     python -m pytest -q --junitxml=reports/junit.xml
                 '''
             }
@@ -48,7 +48,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %IMAGE_TAG% -t library-app:latest ."
+                sh "docker build -t ${IMAGE_TAG} -t library-app:latest ."
             }
         }
 
