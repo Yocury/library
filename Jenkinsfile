@@ -17,13 +17,13 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                sh 'python --version || python3 --version'
+                bat 'python --version || python3 --version'
             }
         }
 
         stage('Install') {
             steps {
-                sh '''
+                bat '''
                     python -m pip install --upgrade pip
                     python -m pip install -r requirements.txt
                 '''
@@ -32,7 +32,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh '''
+                bat '''
                     mkdir -p reports
                     python -m pytest -q --junitxml=reports/junit.xml
                 '''
@@ -47,14 +47,14 @@ pipeline {
         stage('Build Docker Image') {
             when { branch 'main' }
             steps {
-                sh "docker build -t ${IMAGE_TAG} -t library-app:latest ."
+                bat "docker build -t ${IMAGE_TAG} -t library-app:latest ."
             }
         }
 
         stage('Deploy') {
             when { branch 'main' }
             steps {
-                sh '''
+                bat '''
                     docker compose down || true
                     docker compose up -d --build
                 '''
