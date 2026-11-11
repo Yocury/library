@@ -5,6 +5,7 @@ pipeline {
         SECRET_KEY = 'ci-secret'
         DATABASE   = "${WORKSPACE}/ci_library.db"
         IMAGE_TAG  = "library-app:${BUILD_NUMBER}"
+        PATH = "C:\\Windows\\System32;C:\\Users\\Vladimir\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\Vladimir\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${env.PATH}"
     }
 
     options {
@@ -33,7 +34,7 @@ pipeline {
         stage('Test') {
             steps {
                 bat '''
-                    mkdir -p reports
+                    if not exist reports mkdir reports
                     python -m pytest -q --junitxml=reports/junit.xml
                 '''
             }
@@ -45,17 +46,16 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            when { branch 'main' }
             steps {
-                bat "docker build -t ${IMAGE_TAG} -t library-app:latest ."
+                // Собираем образ. Если Docker не видит команду, укажи полный путь, например: "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe"
+                bat "docker build -t %IMAGE_TAG% -t library-app:latest ."
             }
         }
 
         stage('Deploy') {
-            when { branch 'main' }
             steps {
                 bat '''
-                    docker compose down || true
+                    docker compose down
                     docker compose up -d --build
                 '''
             }
