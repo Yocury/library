@@ -39,4 +39,3 @@ docker compose up -d --build
 ## Ветки
 - `main` — стабильная версия, деплой.
 - `dev` — интеграционная ветка.
-- `feature/library-entities` — переделка под библиотеку.
