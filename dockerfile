@@ -15,4 +15,4 @@ RUN mkdir -p /data reports
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python -c 'from app import init_db; init_db()' && gunicorn -b 0.0.0.0:8000 -w 2 app:app"]
+CMD ["sh", "-c", "python -c 'from app import init_db; init_db()' && python seed.py && gunicorn -b 0.0.0.0:8000 -w 2 app:app"]
