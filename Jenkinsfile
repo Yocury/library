@@ -55,7 +55,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat '''
-                    docker compose down
+                    docker compose down || true
+                    docker rm -f library_app || true
+                    docker rm -f library_nginx || true
                     docker compose up -d --build
                 '''
             }
