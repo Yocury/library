@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}СтройАренда{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --panel: #fff;
+      --text: #202938;
+      --muted: #687386;
+      --accent: #274e62;
+      --line: #e3e8ef;
+      --danger: #b42318
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 Arial, Helvetica, sans-serif
+    }
+
+    header {
+      background: #322e2e;
+      color: white;
+      padding: 18px max(20px, calc((100% - 1180px)/2));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 800;
+      text-decoration: none;
+      color: white
+    }
+
+    .brand span {
+      color: #ffffff
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    nav a {
+      color: #dbe3ed;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 8px
+    }
+
+    nav a:hover,
+    nav a.active {
+      background: #2b3c52;
+      color: white
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 30px auto;
+      padding: 0 20px
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 20px
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px
+    }
+
+    h2 {
+      margin-top: 0
+    }
+
+    .muted {
+      color: var(--muted)
+    }
+
+    .btn {
+      display: inline-block;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: #1c2632;
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px
+    }
+
+    .btn.secondary {
+      background: #e9edf3;
+      color: #273449
+    }
+
+    .btn.danger {
+      background: #fee4e2;
+      color: var(--danger)
+    }
+
+    .btn.small {
+      padding: 6px 9px;
+      font-size: 12px
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 16px #17233408
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0
+    }
+
+    .stat {
+      background: white;
+      border: 1px solid var(--line);
+      padding: 18px;
+      border-radius: 12px
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      margin-top: 5px
+    }
+
+    .stat small {
+      color: var(--muted)
+    }
+
+    .table-wrap {
+      overflow-x: auto
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      background: #fafbfd
+    }
+
+    tr:last-child td {
+      border-bottom: 0
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    .inline {
+      display: inline
+    }
+
+    .search {
+      display: flex;
+      gap: 8px;
+      max-width: 460px
+    }
+
+    .search input {
+      flex: 1
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #cbd3df;
+      border-radius: 8px;
+      padding: 10px 11px;
+      background: white;
+      color: var(--text);
+      font: inherit
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px
+    }
+
+    .field {
+      margin-bottom: 16px
+    }
+
+    .checkrow {
+      display: flex;
+      gap: 9px;
+      align-items: center
+    }
+
+    .checkrow input {
+      width: auto
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 18px
+    }
+
+    .flash {
+      padding: 12px 15px;
+      border-radius: 9px;
+      margin-bottom: 12px
+    }
+
+    .flash.success {
+      background: #dcfae6;
+      color: #17663a
+    }
+
+    .flash.error {
+      background: #fee4e2;
+      color: #912018
+    }
+
+    .empty {
+      padding: 30px;
+      text-align: center;
+      color: var(--muted)
+    }
+
+    .pill {
+      display: inline-block;
+      border-radius: 99px;
+      padding: 3px 9px;
+      background: #edf1f6;
+      font-size: 12px
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      margin: 30px 0
+    }
+
+    @media(max-width:760px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr
+      }
+
+      main {
+        margin-top: 20px
+      }
+
+      h1 {
+        font-size: 23px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <a class="brand" href="{{ url_for('dashboard') }}">Библио<span>тека</span></a>
+    <nav>
+      <a href="{{ url_for('dashboard') }}">Главная</a>
+      <a href="{{ url_for('list_records', entity='books') }}">Книги</a>
+      <a href="{{ url_for('list_records', entity='authors') }}">Авторы</a>
+      <a href="{{ url_for('list_records', entity='genres') }}">Жанры</a>
+      <a href="{{ url_for('list_records', entity='readers') }}">Читатели</a>
+      <a href="{{ url_for('list_records', entity='loans') }}">Выдачи</a>
+    </nav>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{%
+    endfor %}{% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+
+</html>
+
+</html>
