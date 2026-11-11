@@ -37,5 +37,5 @@ docker compose up -d --build
 - Триггер: GitHub webhook `http://<jenkins>:8080/github-webhook/`.
 
 ## Ветки
-- `main` — стабильная версия, деплой.
+- `main` — стабильная версия, деплой123.
 - `dev` — интеграционная ветка.
