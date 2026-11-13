@@ -16,12 +16,15 @@ pipeline {
     }
 
     stages {
+        // Эта стадия выполняется для ВСЕХ трех веток
         stage('Checkout') {
             steps {
                 checkout scm
+                bat 'python --version || python3 --version'
             }
         }
 
+        // Эта стадия выполняется для ВСЕХ трех веток
         stage('Install') {
             steps {
                 bat '''
@@ -31,6 +34,7 @@ pipeline {
             }
         }
 
+        // Эта стадия выполняется для ВСЕХ трех веток
         stage('Test') {
             steps {
                 bat '''
@@ -38,19 +42,25 @@ pipeline {
                     python -m pytest -q --junitxml=reports/junit.xml
                 '''
             }
-
+            post {
+                always {
+                    junit 'reports/junit.xml'
+                }
+            }
         }
 
+        // Сборка образа: только для dev и main (в feature не нужно тратить время)
         stage('Build Docker Image') {
+            when { anyOf { branch 'dev'; branch 'main' } }
             steps {
-                // Тегируем образ и для локального использования, и для Docker Hub
                 bat "docker build -t %IMAGE_TAG% -t %DOCKERHUB_REPO%:latest -t %DOCKERHUB_REPO%:%BUILD_NUMBER% ."
             }
         }
 
+        // Пуш в Docker Hub: только для main
         stage('Push to Docker Hub') {
+            when { branch 'main' }
             steps {
-                // Используем withCredentials, чтобы пароль не светился в логах
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                     bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
                     bat "docker push %DOCKERHUB_REPO%:%BUILD_NUMBER%"
@@ -59,12 +69,11 @@ pipeline {
             }
         }
 
+        // Деплой (перезапуск контейнеров): только для main
         stage('Deploy') {
+            when { branch 'main' }
             steps {
                 bat '''
-                    docker compose down || true
-                    docker rm -f library_app || true
-                    docker rm -f library_nginx || true
                     docker compose up -d --build
                 '''
             }
@@ -72,7 +81,7 @@ pipeline {
     }
 
     post {
-        success { echo "CI/CD успешно завершён: ${env.BUILD_NUMBER}" }
+        success { echo "Сборка ${env.BUILD_NUMBER} успешно завершена" }
         failure { echo "Сборка ${env.BUILD_NUMBER} упала" }
         always  { cleanWs() }
     }
