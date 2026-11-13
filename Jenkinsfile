@@ -19,7 +19,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                bat 'python --version || python3 --version'
             }
         }
 
@@ -39,11 +38,7 @@ pipeline {
                     python -m pytest -q --junitxml=reports/junit.xml
                 '''
             }
-            post {
-                always {
-                    junit 'reports/junit.xml'
-                }
-            }
+
         }
 
         stage('Build Docker Image') {
@@ -54,7 +49,6 @@ pipeline {
         }
 
         stage('Push to Docker Hub') {
-            when { branch 'main' } // Пушим только из главной ветки
             steps {
                 // Используем withCredentials, чтобы пароль не светился в логах
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
