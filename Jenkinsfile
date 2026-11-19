@@ -87,20 +87,20 @@ pipeline {
         }
 
         stage('Deploy') {
-            when { branch 'main' }
-            steps {
+    when { branch 'main' }
+    steps {
                 bat '''
-                    taskkill /F /IM python.exe /T >nul 2>&1 || exit /b 0
-                    python -c "import app; app.init_db()"
+                    REM 1. Остановить старое приложение
+                    schtasks /End /TN LibraryApp >nul 2>&1 || exit /b 0
 
+                    REM 2. Запустить заново (процесс отвязан от Jenkins)
+                    schtasks /Run /TN LibraryApp
 
-                    start "" /B python -m flask --app app run --host 0.0.0.0 --port 5000 > deploy.log 2>&1
-                    timeout /t 5 /nobreak >nul
-
+                    REM 3. Подождать и проверить, что сайт отвечает
+                    timeout /t 7 /nobreak >nul
                     python -c "import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:5000/', timeout=5); sys.exit(0 if r.status==200 else 1)"
                     if errorlevel 1 (
                         echo [DEPLOY] app failed to start after deploy
-                        type deploy.log
                         exit /b 1
                     )
                     echo [DEPLOY] OK
