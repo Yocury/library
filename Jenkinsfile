@@ -46,6 +46,8 @@ pipeline {
         stage('Smoke test') {
             steps {
                 bat '''
+                python -c "import app; app.init_db()"
+
                     if not exist reports mkdir reports
 
                     start "" /B python -m flask --app app run --host 127.0.0.1 --port 5000 > reports\\app.log 2>&1
@@ -89,6 +91,8 @@ pipeline {
             steps {
                 bat '''
                     taskkill /F /IM python.exe /T >nul 2>&1 || exit /b 0
+                    python -c "import app; app.init_db()"
+
 
                     start "" /B python -m flask --app app run --host 0.0.0.0 --port 5000 > deploy.log 2>&1
                     timeout /t 5 /nobreak >nul
