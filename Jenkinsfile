@@ -86,39 +86,38 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            when { branch 'main' }
-            steps {
-                bat '''
-                    REM 1. Остановить старое приложение (если задачи нет — не страшно)
-                    schtasks /End /TN LibraryApp >nul 2>&1
+stage('Deploy') {
+    when { branch 'main' }
+    steps {
+        bat '''
+            REM 1. Остановить старое приложение (если задачи нет — не страшно)
+            schtasks /End /TN LibraryApp >nul 2>&1
 
-                    REM 2. Убедиться, что задача вообще существует
-                    schtasks /Query /TN LibraryApp >nul 2>&1
-                    if errorlevel 1 (
-                        echo [DEPLOY] task LibraryApp not found. Create it once manually:
-                        echo schtasks /Create /TN LibraryApp /TR "cmd /c cd /d %CD% && python -c \\"import app; app.init_db()\\" && python -m flask --app app run --host 0.0.0.0 --port 5000" /SC ONCE /ST 00:00 /F
-                        exit /b 1
-                    )
+            REM 2. Убедиться, что задача вообще существует
+            schtasks /Query /TN LibraryApp >nul 2>&1
+            if errorlevel 1 (
+                echo [DEPLOY] task LibraryApp not found. Create it once manually, see Jenkinsfile comments.
+                exit /b 1
+            )
 
-                    REM 3. Запустить заново
-                    schtasks /Run /TN LibraryApp
-                    if errorlevel 1 (
-                        echo [DEPLOY] schtasks /Run failed
-                        exit /b 1
-                    )
+            REM 3. Запустить заново
+            schtasks /Run /TN LibraryApp
+            if errorlevel 1 (
+                echo [DEPLOY] schtasks /Run failed
+                exit /b 1
+            )
 
-                    REM 4. Подождать и проверить, что сайт отвечает
-                    timeout /t 7 /nobreak >nul
-                    python -c "import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:5000/', timeout=5); sys.exit(0 if r.status==200 else 1)"
-                    if errorlevel 1 (
-                        echo [DEPLOY] app failed to start after deploy
-                        exit /b 1
-                    )
-                    echo [DEPLOY] OK
-                '''
-            }
-        }
+            REM 4. Подождать и проверить, что сайт отвечает
+            timeout /t 7 /nobreak >nul
+            python -c "import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:5000/', timeout=5); sys.exit(0 if r.status==200 else 1)"
+            if errorlevel 1 (
+                echo [DEPLOY] app failed to start after deploy
+                exit /b 1
+            )
+            echo [DEPLOY] OK
+        '''
+    }
+}
     }
 
     post {
