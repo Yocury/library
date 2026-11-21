@@ -5,13 +5,16 @@ import sqlite3
 
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 
-BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_DB = BASE_DIR / "instance" / "library.db"
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "instance", "library.db")
+
 
 app = Flask(__name__)
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY", "dev-only-change-me"),
-    DATABASE=os.environ.get("DATABASE", str(DEFAULT_DB)),
+    DATABASE=os.environ.get("DATABASE", str(DATABASE)),
 )
 
 # Five entities x four CRUD operation types = at least 20 implemented operations.
