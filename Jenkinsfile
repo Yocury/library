@@ -100,7 +100,7 @@ pipeline {
         // 5. Операции только для ветки test
         stage('Test branch operations') {
             when {
-                branch 'test'
+                branch 'dev'
             }
             steps {
                 echo 'Ветка test: выполнены автоматические тесты.'
@@ -110,55 +110,72 @@ pipeline {
 
         // 6. Деплой только из main
         stage('Deploy') {
-            when {
-                branch 'main'
-            }
-            steps {
-                bat '''
-                    echo [DEPLOY] Starting deployment...
+    when {
+        branch 'main'
+    }
+    steps {
+        bat '''
+            echo [DEPLOY] Starting deployment...
 
-                    REM Остановка старого экземпляра приложения
-                    schtasks /End /TN LibraryApp >nul 2>&1
+            REM Проверяем существование задачи
+            schtasks /Query /TN LibraryApp >nul 2>&1
 
-                    REM Копирование новой версии приложения
-                    if not exist "%DEPLOY_DIR%" mkdir "%DEPLOY_DIR%"
+            if errorlevel 1 (
+                echo [DEPLOY] Scheduled task LibraryApp not found
+                exit /b 1
+            )
 
-                    robocopy "%WORKSPACE%" "%DEPLOY_DIR%" /E /XD .git .venv venv reports __pycache__ /XF *.db
+            REM Останавливаем старое приложение
+            echo [DEPLOY] Stopping old application...
 
-                    if errorlevel 8 (
-                        echo [DEPLOY] File copy failed
-                        exit /b 1
-                    )
+            schtasks /End /TN LibraryApp >nul 2>&1
 
-                    REM Проверка существования задачи
-                    schtasks /Query /TN LibraryApp >nul 2>&1
+            REM Ждем освобождения порта 5000
+            "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -Command "$free=$false; for($i=0; $i -lt 30; $i++){ $c=Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue; if(-not $c){$free=$true; break}; Start-Sleep -Seconds 1 }; if(-not $free){Write-Host '[DEPLOY] Port 5000 is still occupied'; exit 1}"
 
-                    if errorlevel 1 (
-                        echo [DEPLOY] Scheduled task LibraryApp not found
-                        exit /b 1
-                    )
+            if errorlevel 1 (
+                echo [DEPLOY] Failed to stop old application
+                exit /b 1
+            )
 
-                    REM Запуск обновлённого приложения
-                    schtasks /Run /TN LibraryApp
+            REM Копируем новую версию
+            echo [DEPLOY] Copying application files...
 
-                    if errorlevel 1 (
-                        echo [DEPLOY] Failed to start application
-                        exit /b 1
-                    )
+            if not exist "%DEPLOY_DIR%" mkdir "%DEPLOY_DIR%"
 
-                    REM Проверка доступности приложения
-                    powershell -NoProfile -Command "$ok=$false; for($i=0; $i -lt 30; $i++){try{$r=Invoke-WebRequest 'http://127.0.0.1:5000/' -TimeoutSec 3; if($r.StatusCode -eq 200){$ok=$true; break}}catch{}; Start-Sleep -Seconds 1}; if(-not $ok){exit 1}"
+            robocopy "%WORKSPACE%" "%DEPLOY_DIR%" /E /XD .git .venv venv reports __pycache__ .pytest_cache .vs /XF *.db
 
-                    if errorlevel 1 (
-                        echo [DEPLOY] Application failed to start
-                        schtasks /Query /TN LibraryApp /V /FO LIST
-                        exit /b 1
-                    )
+            if errorlevel 8 (
+                echo [DEPLOY] File copy failed
+                exit /b 1
+            )
 
-                    echo [DEPLOY] Application successfully updated and running!
-                '''
-            }
-        }
+            REM Запускаем приложение
+            echo [DEPLOY] Starting application...
+
+            schtasks /Run /TN LibraryApp
+
+            if errorlevel 1 (
+                echo [DEPLOY] Failed to start scheduled task
+                exit /b 1
+            )
+
+            REM Проверяем доступность приложения
+            echo [DEPLOY] Waiting for HTTP 200...
+
+            "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -ExecutionPolicy Bypass -Command "$ok=$false; for($i=0; $i -lt 60; $i++){try{$r=Invoke-WebRequest 'http://127.0.0.1:5000/' -TimeoutSec 3 -UseBasicParsing; if($r.StatusCode -eq 200){$ok=$true; break}}catch{}; Start-Sleep -Seconds 1}; if(-not $ok){Write-Host '[DEPLOY] Application did not respond'; exit 1}; Write-Host '[DEPLOY] HTTP 200 OK'"
+
+            if errorlevel 1 (
+                echo [DEPLOY] Application failed to start
+                schtasks /Query /TN LibraryApp /V /FO LIST
+                if exist "C:\\LibraryApp\\flask.log" type "C:\\LibraryApp\\flask.log"
+                exit /b 1
+            )
+
+            echo [DEPLOY] Application successfully updated and running!
+        '''
+    }
+}
     }
 
     post {
